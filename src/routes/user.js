@@ -113,6 +113,19 @@ router.get('/users', async (req, res) => {
     }
 })
 
+router.get('/user/:id', auth, async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+
+        if (!user)
+            res.status(404).send()
+        
+        res.send(user)
+    } catch (e) {   
+        res.status(500).send()
+    }
+})
+
 router.get('/user_posts', auth, async (req, res) => {
     try {
         await req.user.populate({
