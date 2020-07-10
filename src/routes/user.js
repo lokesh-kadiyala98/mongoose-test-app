@@ -57,7 +57,6 @@ router.post('/user/logout_all_devices', auth, async (req, res) => {
 })
 
 const upload = multer({
-    dest: 'uploads/pictures',
     limits: {
         fileSize: 1000000
     },
@@ -69,10 +68,33 @@ const upload = multer({
     }
 })
 
-router.post('/user/profile/pic', auth, upload.single('profile_pic'), (req, res) => {
+router.post('/user/profile/pic', auth, upload.single('profile_pic'), async (req, res) => {
+    req.user.profile_pic = req.file.buffer
+    await req.user.save()
     res.send()
 }, (error, req, res, next) => {
     res.status(400).send({ error: error.message })
+})
+
+router.delete('/user/profile/pic', auth, async (req, res) => {
+    req.user.profile_pic = undefined
+    await req.user.save()
+    res.send()
+})
+
+router.get('/user/profile/pic/:id', async (req, res) => {
+    try {
+        const user = await User.findById(req.params.id)
+
+        if (!user || !user.profile_pic) {
+            throw new Error()
+        }
+
+        res.set('Content-Type', 'image/jpg')
+        res.send(user.profile_pic)
+    } catch (e) {
+        res.status(404).send()
+    }
 })
 
 router.get('/user/profile', auth, (req, res) => {
@@ -99,7 +121,6 @@ router.get('/user_posts', auth, async (req, res) => {
         
         res.send(req.user.posts)
     } catch (e) {
-        console.log(e)
         res.status(500).send()
     }
 })

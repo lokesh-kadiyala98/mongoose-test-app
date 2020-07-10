@@ -34,7 +34,10 @@ const userSchema = new mongoose.Schema({
             type: String,
             required: true
         }
-    }]
+    }],
+    profile_pic: {
+        type: Buffer
+    }
 }, {
     timestamps: true
 })
@@ -50,8 +53,10 @@ userSchema.methods.toJson = function() {
 
     const userObject = user.toObject()
 
+    console.log("HI")
     delete userObject.password
     delete userObject.tokens
+    delete userObject.profile_pic
 }
 
 userSchema.methods.generateAuthToken = async function() {
