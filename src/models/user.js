@@ -48,15 +48,16 @@ userSchema.virtual('posts', {
     foreignField: 'ownerId'
 })
 
-userSchema.methods.toJson = function() {
+userSchema.methods.toJSON = function() {
     const user = this
 
     const userObject = user.toObject()
-
-    console.log("HI")
+    
     delete userObject.password
     delete userObject.tokens
     delete userObject.profile_pic
+
+    return userObject
 }
 
 userSchema.methods.generateAuthToken = async function() {
