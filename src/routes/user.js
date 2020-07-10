@@ -1,5 +1,6 @@
 const express = require('express')
 const router = new express.Router()
+const multer = require('multer')
 
 const auth = require('../middleware/auth')
 const User = require('../models/user')
@@ -55,6 +56,25 @@ router.post('/user/logout_all_devices', auth, async (req, res) => {
     }
 })
 
+const upload = multer({
+    dest: 'uploads/pictures',
+    limits: {
+        fileSize: 1000000
+    },
+    fileFilter(req, file, cb) {
+        if(!file.originalname.match(/\.(jpg|jpeg|png)$/))
+            return cb(new Error('Please upload an image'))
+        
+        cb(undefined, true)
+    }
+})
+
+router.post('/user/profile/pic', auth, upload.single('profile_pic'), (req, res) => {
+    res.send()
+}, (error, req, res, next) => {
+    res.status(400).send({ error: error.message })
+})
+
 router.get('/user/profile', auth, (req, res) => {
     res.send(req.user)
 })
@@ -73,11 +93,11 @@ router.get('/users', async (req, res) => {
 
 router.get('/user_posts', auth, async (req, res) => {
     try {
-        const user = await User.findById(req.user._id)
-
-        await user.populate('posts').execPopulate()
-
-        res.send(user.posts)
+        await req.user.populate({
+            path: 'posts'
+        }).execPopulate()
+        
+        res.send(req.user.posts)
     } catch (e) {
         console.log(e)
         res.status(500).send()
