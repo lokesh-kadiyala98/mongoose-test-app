@@ -5,6 +5,7 @@ const sharp = require('sharp')
 
 const auth = require('../middleware/auth')
 const User = require('../models/user')
+const { sendWelcomeEmail, sendExitEmail } = require('../emails/account')
 
 router.post('/user', async (req, res) => {
     const user = new User(req.body)
@@ -13,11 +14,17 @@ router.post('/user', async (req, res) => {
         await user.save()
 
         const token = await user.generateAuthToken()
-
+        
+        sendWelcomeEmail(user.email, user.name)
+        
         res.status(201).send({ user, token })
     } catch (e) {
-        console.log(e)
-        res.status(500).send({ 'message': 'Error occured while creating user' }) 
+        if (e.code === 11000)
+            res.status(400).send("User with same email exists")
+        else if (e.message)
+            res.status(400).send(e.message)
+        else
+            res.status(500).send({ 'message': 'Error occured while creating user' }) 
     }
 })
 
@@ -171,6 +178,8 @@ router.patch('/user', auth, async (req, res) => {
 router.delete('/user', auth, async (req, res) => {
     try {
         await req.user.remove()
+
+        sendExitEmail(req.user.email, req.user.name)
 
         res.status(200).send(req.user)
     } catch (e) {
